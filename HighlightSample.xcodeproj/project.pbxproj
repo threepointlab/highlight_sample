@@ -16,6 +16,8 @@
 		AA000076 /* TrialStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000016 /* TrialStub.swift */; };
 		AA000077 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000017 /* Assets.xcassets */; };
 		AA000078 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000018 /* Haptics.swift */; };
+		AA000079 /* ClipRangeShapeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000019 /* ClipRangeShapeView.swift */; };
+		AA000080 /* ClipRangeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000B0 /* ClipRangeViews.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +30,8 @@
 		AA000016 /* TrialStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrialStub.swift; sourceTree = "<group>"; };
 		AA000017 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA000018 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		AA000019 /* ClipRangeShapeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipRangeShapeView.swift; sourceTree = "<group>"; };
+		AA0000B0 /* ClipRangeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipRangeViews.swift; sourceTree = "<group>"; };
 		AA000040 /* HighlightSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HighlightSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -42,7 +46,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		AA000020 /* HighlightSample */ = {
+		AA0000A0 /* HighlightSample */ = {
 			isa = PBXGroup;
 			children = (
 				AA000010 /* HighlightSampleApp.swift */,
@@ -66,6 +70,8 @@
 			isa = PBXGroup;
 			children = (
 				AA000012 /* ClipRangePicker.swift */,
+				AA000019 /* ClipRangeShapeView.swift */,
+				AA0000B0 /* ClipRangeViews.swift */,
 				AA000013 /* ResultHighlightsView.swift */,
 				AA000014 /* ResultHighlightMock.swift */,
 			);
@@ -85,7 +91,7 @@
 		AA000024 /* / */ = {
 			isa = PBXGroup;
 			children = (
-				AA000020 /* HighlightSample */,
+				AA0000A0 /* HighlightSample */,
 				AA000021 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -167,6 +173,8 @@
 				AA000075 /* DesignTokens.swift in Sources */,
 				AA000076 /* TrialStub.swift in Sources */,
 				AA000078 /* Haptics.swift in Sources */,
+				AA000079 /* ClipRangeShapeView.swift in Sources */,
+				AA000080 /* ClipRangeViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
