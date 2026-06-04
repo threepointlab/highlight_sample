@@ -2,6 +2,14 @@ import SwiftUI
 import UIKit
 import AVFoundation
 
+// MARK: - ClipRangeInteraction
+
+enum ClipRangeInteraction: Equatable, Sendable {
+    case leftHandle(time: TimeInterval)
+    case rightHandle(time: TimeInterval)
+    case bodyTranslate(startTime: TimeInterval)
+}
+
 // MARK: - Constants
 
 /// 본 컴포넌트의 시각 상수. plan: `cliff-designsystem-components-cliprange-idempotent-hamming.md` 의 "Layer 구조".
@@ -109,6 +117,7 @@ struct ClipRangePicker: View {
     let videoDuration: TimeInterval
     @Binding var startTime: TimeInterval
     @Binding var endTime: TimeInterval
+    var onInteraction: ((ClipRangeInteraction?) -> Void)? = nil
 
     /// Pinch 결과로 Coordinator 가 push 하는 zoom 값. videoURL 변경 시 Coordinator 가 1 로 reset.
     @State private var zoom: CGFloat = 1
@@ -121,7 +130,8 @@ struct ClipRangePicker: View {
                 viewportWidth: geo.size.width,
                 startTime: $startTime,
                 endTime: $endTime,
-                zoom: $zoom
+                zoom: $zoom,
+                onInteraction: onInteraction
             )
         }
         .frame(height: ClipRangePickerConstants.totalHeight)
@@ -138,6 +148,7 @@ struct ClipRangeScrollView: UIViewRepresentable {
     @Binding var startTime: TimeInterval
     @Binding var endTime: TimeInterval
     @Binding var zoom: CGFloat
+    var onInteraction: ((ClipRangeInteraction?) -> Void)? = nil
 
     func makeCoordinator() -> ClipRangeCoordinator {
         ClipRangeCoordinator(
@@ -212,6 +223,8 @@ struct ClipRangeScrollView: UIViewRepresentable {
         contentView.addSubview(bodyHitZone)
         coordinator.views.bodyHitZone = bodyHitZone
 
+        coordinator.onInteraction = onInteraction
+
         // 제스처 부착
         coordinator.attachGestures()
 
@@ -230,6 +243,7 @@ struct ClipRangeScrollView: UIViewRepresentable {
 
     func updateUIView(_ uiView: UIScrollView, context: Context) {
         let coordinator = context.coordinator
+        coordinator.onInteraction = onInteraction
         coordinator.configure(
             videoURL: videoURL,
             videoDuration: videoDuration,
@@ -265,6 +279,7 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
 
     // MARK: Test seams — production: Haptics.impact(.soft). 테스트는 spy closure 주입.
     var hapticsImpactSoft: @MainActor () -> Void = { Haptics.impact(.soft) }
+    var onInteraction: ((ClipRangeInteraction?) -> Void)?
 
     // MARK: 최근 configure 값 캐시 — drag/pinch 핸들러가 widthPerSecond / focal 계산에 사용.
     private var currentVideoDuration: TimeInterval = 0
@@ -494,6 +509,7 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
             scroll.isScrollEnabled = false
             dragOriginStart = startBinding.wrappedValue
             views.setHandleActive(side: .left, active: true)
+            onInteraction?(.leftHandle(time: startBinding.wrappedValue))
         case .changed:
             let deltaT = TimeInterval(pan.translation(in: scroll).x / widthPerSecond)
             let candidate = dragOriginStart + deltaT
@@ -503,9 +519,11 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
                 videoDuration: videoDuration
             )
             startBinding.wrappedValue = newStart
+            onInteraction?(.leftHandle(time: newStart))
         case .ended, .cancelled, .failed:
             scroll.isScrollEnabled = true
             views.setHandleActive(side: .left, active: false)
+            onInteraction?(nil)
         default:
             break
         }
@@ -524,6 +542,7 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
             scroll.isScrollEnabled = false
             dragOriginEnd = endBinding.wrappedValue
             views.setHandleActive(side: .right, active: true)
+            onInteraction?(.rightHandle(time: endBinding.wrappedValue))
         case .changed:
             let deltaT = TimeInterval(pan.translation(in: scroll).x / widthPerSecond)
             let candidate = dragOriginEnd + deltaT
@@ -533,9 +552,11 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
                 videoDuration: videoDuration
             )
             endBinding.wrappedValue = newEnd
+            onInteraction?(.rightHandle(time: newEnd))
         case .ended, .cancelled, .failed:
             scroll.isScrollEnabled = true
             views.setHandleActive(side: .right, active: false)
+            onInteraction?(nil)
         default:
             break
         }
@@ -563,6 +584,7 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
         isTranslatingRange = true
         views.setHandleActive(side: .left, active: true)
         views.setHandleActive(side: .right, active: true)
+        onInteraction?(.bodyTranslate(startTime: startBinding.wrappedValue))
     }
 
     /// LongPress.ended/cancelled/failed 시 호출. spy 가능하도록 internal. guard 로 idempotent 보장.
@@ -573,6 +595,7 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
         scrollView?.isScrollEnabled = true
         views.setHandleActive(side: .left, active: false)
         views.setHandleActive(side: .right, active: false)
+        onInteraction?(nil)
     }
 
     @objc private func handleBodyPan(_ pan: UIPanGestureRecognizer) {
@@ -598,9 +621,9 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
             )
             startBinding.wrappedValue = ns
             endBinding.wrappedValue = ne
+            onInteraction?(.bodyTranslate(startTime: ns))
         case .ended, .cancelled, .failed:
-            // LongPress 의 ended 핸들러가 isTranslatingRange/스크롤/시각 복원을 수행.
-            break
+            exitTranslateMode()
         default:
             break
         }
