@@ -116,6 +116,56 @@ HighlightSample/
 
 ---
 
+## 단계별 브랜치 — 구현 진화 추적
+
+각 브랜치는 직전 단계 위에 쌓이며, 해당 시점의 소스를 그대로 담고 있어 `git diff step1..step2` 등으로 변화량을 비교할 수 있습니다.
+
+| 브랜치 | 핵심 변경 | 관련 커밋 |
+|---|---|---|
+| `step1` (`main`) | 순수 SwiftUI `ZStack + DragGesture` 최초 구현 | `161c1df`, `c3eca74` |
+| `step2` | `UIScrollView + UIViewRepresentable` 전환, Pinch zoom, long-press body translate, Haptics | `715fa24` |
+| `step3` | `ClipRangeShapeView` 단일 `CAShapeLayer` stroke, 핸들 clip 바깥, `ClipRangeViews` 분리 | `5c1dc3e` |
+| `step4` | `ClipRangeInteraction` + `onInteraction` 클로저, `PreviewFrameLoader` actor, 드래그 중 프레임 오버레이 | `3f699de`, `d89a8de`, `7796899` |
+| `step5` | `ClipRangePickerController.focus(on:)`, `CASpringAnimation`, 30fps throttle, seek guard | `7c79238`, `b6a9888` |
+
+### 각 단계 상세
+
+#### step1 — 순수 SwiftUI (최초 구현)
+- `ZStack` 5-레이어: thumbnailLayer → dimLayer → borderLayer → handleLayer → tooltipLayer
+- `DragGesture` 로 left/right/range 세 가지 인터랙션을 단일 state machine 으로 처리
+- `DragState: idle | draggingStart | draggingEnd | draggingRange`
+- `ResultHighlightsView`: `TabView(.page)` peek carousel + `@State` 배열로 각 페이지 start/end 보관
+
+#### step2 — UIScrollView 전환 + Pinch zoom
+- `UIViewRepresentable` `ClipRangePicker` + `ClipRangeCoordinator` (UIScrollViewDelegate + UIGestureRecognizerDelegate)
+- **전환 이유**: 순수 SwiftUI DragGesture 는 scroll + handle 동시 인식에서 gesture 충돌 발생
+- `UIPinchGestureRecognizer` 로 contentWidth 확장, focal point 보정으로 핀치 위치에서 줌
+- `UILongPressGestureRecognizer` + `UIPanGestureRecognizer` simultaneous 로 구간 평행 이동
+- `UISelectionFeedbackGenerator` / `UIImpactFeedbackGenerator` 햅틱 피드백
+
+#### step3 — ClipRangeShapeView 단일 path
+- 기존 4개 UIView (상단바, 하단바, 좌핸들, 우핸들) → `CAShapeLayer` 단일 roundedRect stroke
+- 핸들이 clip 영역 **바깥**으로 나가 선택 구간을 가리지 않음
+- `ClipRangeViews`: UIView ref 보관 + frame layout 전담으로 Coordinator 에서 분리
+
+#### step4 — ClipRangeInteraction + PreviewFrameLoader
+- `ClipRangeInteraction` 타입: `.leftHandle(time:)` / `.rightHandle(time:)` / `.bodyTranslate(start:end:)`
+- `onInteraction: ((ClipRangeInteraction?) -> Void)?` 클로저로 외부에 인터랙션 이벤트 전달
+- `FrameDecoder` 프로토콜 + `AVAssetImageGeneratorFrameDecoder` actor
+- `PreviewFrameLoader`: 80ms leading+trailing throttle 로 드래그 중 실제 영상 프레임 오버레이 로딩
+- `ResultHighlightsView`: `onInteraction` → `previewLoader.request()` 연동
+
+#### step5 — ClipRangePickerController + spring 애니메이션 + 회귀 수정
+- `ClipRangePickerController.focus(on:animated:)`: SwiftUI diff 없이 특정 시간으로 스크롤하는 imperative 채널
+  - **주의**: picker 에 `.id(...)` 부여 시 thumbnail Task 재시작 회귀 → controller 로 대체
+- `ClipRangeShapeView.setRange(animated:)` + `CASpringAnimation(keyPath: "path")`: scroll spring 동기화 애니메이션
+- `ResultHighlightsView` 회귀 수정 3건:
+  1. `pendingFocusTime` apply defer → thumbnail placeholder spill 버그 해소
+  2. `handleInteraction` 30fps throttle → 드래그 중 Task 폭발 방지
+  3. seek guard + `onDisappear` Task cancel → preview overlay 메모리 누수 해소
+
+---
+
 ## 이후 주요 진화 포인트 (참고)
 
 Cliff 본체에서 이 최초 구현이 어떻게 발전했는지 요약합니다.
