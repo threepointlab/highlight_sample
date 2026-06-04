@@ -80,6 +80,49 @@ final class ClipRangeViews {
         relayoutThumbnailCells(contentWidth: contentWidth)
     }
 
+    // MARK: animateLayoutViews
+
+    /// highlight 전환 시 clipRange UI 를 spring 으로 이동. contentView/thumbnailStrip/cells 는 건드리지 않음.
+    func animateLayoutViews(
+        startTime: TimeInterval,
+        endTime: TimeInterval,
+        contentWidth: CGFloat,
+        videoDuration: TimeInterval,
+        duration: TimeInterval,
+        damping: CGFloat,
+        initialVelocity: CGFloat
+    ) {
+        guard contentWidth > 0, videoDuration > 0 else { return }
+
+        let widthPerSecond = contentWidth / CGFloat(videoDuration)
+        let startX = ClipRangeMath.timeToX(startTime, widthPerSecond: widthPerSecond)
+        let endX   = ClipRangeMath.timeToX(endTime,   widthPerSecond: widthPerSecond)
+        let clipW  = max(0, endX - startX)
+
+        let hw     = ClipRangePickerConstants.handleSideWidth
+        let totalH = ClipRangePickerConstants.totalHeight
+        let stripH = ClipRangePickerConstants.stripHeight
+        let py     = ClipRangePickerConstants.protrusion
+
+        UIView.animate(
+            withDuration: duration, delay: 0,
+            usingSpringWithDamping: damping, initialSpringVelocity: initialVelocity,
+            options: [.allowUserInteraction, .beginFromCurrentState]
+        ) {
+            self.leftDimView?.frame  = CGRect(x: 0,    y: py, width: max(0, startX),              height: stripH)
+            self.rightDimView?.frame = CGRect(x: endX, y: py, width: max(0, contentWidth - endX), height: stripH)
+            self.leftHandleHitZone?.frame  = CGRect(x: max(0, startX - hw), y: 0, width: hw,      height: totalH)
+            self.rightHandleHitZone?.frame = CGRect(x: endX,                y: 0, width: hw,      height: totalH)
+            self.bodyHitZone?.frame  = CGRect(x: startX, y: 0, width: max(0, clipW),              height: totalH)
+        }
+
+        clipRangeShapeView?.setRange(
+            startX: startX, endX: endX,
+            animated: true,
+            duration: duration, damping: damping, initialVelocity: initialVelocity
+        )
+    }
+
     // MARK: relayoutThumbnailCells
 
     func relayoutThumbnailCells(contentWidth: CGFloat) {

@@ -132,6 +132,113 @@ final class ClipRangeShapeView: UIView {
         rightChevron.frame = CGRect(x: endX,   y: 0, width: hw, height: h)
     }
 
+    // MARK: Animated range update
+
+    /// highlight 전환 시 spring 애니메이션으로 path 변경.
+    /// animated=false 이면 기존 동기 경로 (setNeedsLayout) 와 동일.
+    func setRange(
+        startX: CGFloat,
+        endX: CGFloat,
+        animated: Bool,
+        duration: TimeInterval = 0.45,
+        damping: CGFloat = 0.85,
+        initialVelocity: CGFloat = 0
+    ) {
+        guard animated else {
+            self.startX = startX
+            self.endX = endX
+            return
+        }
+
+        let paths = computePaths(startX: startX, endX: endX, in: bounds)
+
+        func addSpringPath(to cal: CAShapeLayer, new: CGPath, key: String) {
+            let anim = CASpringAnimation(keyPath: "path")
+            anim.fromValue = cal.presentation()?.path ?? cal.path
+            anim.toValue = new
+            // mass=1, stiffness=100, damping=28 → UIView spring(damping:0.85, duration:0.45) 에 근사
+            anim.mass = 1; anim.stiffness = 100; anim.damping = 28
+            anim.initialVelocity = initialVelocity
+            anim.duration = anim.settlingDuration
+            anim.fillMode = .forwards
+            cal.add(anim, forKey: key)
+            cal.path = new
+        }
+
+        addSpringPath(to: strokeLayer,    new: paths.stroke,    key: "strokePath")
+        addSpringPath(to: leftTintLayer,  new: paths.leftTint,  key: "leftTintPath")
+        addSpringPath(to: rightTintLayer, new: paths.rightTint, key: "rightTintPath")
+
+        let shadowAnim = CASpringAnimation(keyPath: "shadowPath")
+        shadowAnim.fromValue = strokeLayer.presentation()?.shadowPath ?? strokeLayer.shadowPath
+        shadowAnim.toValue = paths.stroke
+        shadowAnim.mass = 1; shadowAnim.stiffness = 100; shadowAnim.damping = 28
+        shadowAnim.duration = shadowAnim.settlingDuration
+        shadowAnim.fillMode = .forwards
+        strokeLayer.add(shadowAnim, forKey: "shadowPath")
+        strokeLayer.shadowPath = paths.stroke
+
+        // chevron 은 frame 기반 → UIView.animate 로 보간
+        UIView.animate(
+            withDuration: duration, delay: 0,
+            usingSpringWithDamping: damping, initialSpringVelocity: initialVelocity,
+            options: [.allowUserInteraction, .beginFromCurrentState]
+        ) {
+            let c  = ClipRangePickerConstants.self
+            let hw = c.handleSideWidth
+            let h  = self.bounds.height
+            self.leftChevron.frame  = CGRect(x: startX - hw, y: 0, width: hw, height: h)
+            self.rightChevron.frame = CGRect(x: endX,        y: 0, width: hw, height: h)
+        }
+
+        // model layer 최종 값 반영 (didSet → setNeedsLayout 은 다음 runloop 에 layoutSubviews 를
+        // 부르지만, 이미 layer.path 가 final state 이므로 시각적으로 충돌 없음)
+        self.startX = startX
+        self.endX = endX
+    }
+
+    // MARK: Path computation helper
+
+    private struct LayerPaths {
+        let stroke: CGPath
+        let leftTint: CGPath
+        let rightTint: CGPath
+    }
+
+    private func computePaths(startX: CGFloat, endX: CGFloat, in bounds: CGRect) -> LayerPaths {
+        let c  = ClipRangePickerConstants.self
+        let hw = c.handleSideWidth
+        let r  = c.frameCornerRadius
+        let sw = c.strokeWidth
+        let h  = bounds.height
+        let clipW  = max(0, endX - startX)
+        let shapeX = startX - hw
+        let shapeW = clipW + hw * 2
+        let halfStroke = sw / 2
+
+        let stroke = UIBezierPath(
+            roundedRect: CGRect(
+                x: shapeX + halfStroke, y: halfStroke,
+                width: max(0, shapeW - sw), height: h - sw
+            ),
+            cornerRadius: r
+        ).cgPath
+
+        let leftTint = UIBezierPath(
+            roundedRect: CGRect(x: shapeX, y: 0, width: hw, height: h),
+            byRoundingCorners: [.topLeft, .bottomLeft],
+            cornerRadii: CGSize(width: r, height: r)
+        ).cgPath
+
+        let rightTint = UIBezierPath(
+            roundedRect: CGRect(x: endX, y: 0, width: hw, height: h),
+            byRoundingCorners: [.topRight, .bottomRight],
+            cornerRadii: CGSize(width: r, height: r)
+        ).cgPath
+
+        return LayerPaths(stroke: stroke, leftTint: leftTint, rightTint: rightTint)
+    }
+
     // MARK: Active animation
 
     private func animateActive() {

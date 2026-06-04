@@ -1,6 +1,5 @@
 import AVFoundation
 import CoreGraphics
-import UIKit
 
 // MARK: - FrameDecoder
 
@@ -17,7 +16,9 @@ actor AVAssetImageGeneratorFrameDecoder: FrameDecoder {
         let asset = AVURLAsset(url: url)
         let gen = AVAssetImageGenerator(asset: asset)
         gen.appliesPreferredTrackTransform = true
-        gen.maximumSize = CGSize(width: 720 * scale, height: 1280 * scale)
+        // scale 을 곱하면 3x 기기에서 2160×3840 이 되어 AVFoundation 메모리 한도 초과.
+        // 표시 픽셀(480pt × scale)이면 preview overlay 에 충분하다.
+        gen.maximumSize = CGSize(width: 480 * scale, height: 960 * scale)
         gen.requestedTimeToleranceBefore = CMTime(seconds: 0.1, preferredTimescale: 600)
         gen.requestedTimeToleranceAfter  = CMTime(seconds: 0.1, preferredTimescale: 600)
         self.generator = gen
@@ -40,7 +41,7 @@ actor PreviewFrameLoader {
     private var lastFiredAt: ContinuousClock.Instant?
     private var pendingTime: TimeInterval?
     private var pendingToken: UInt64?
-    private var pendingOnImage: (@MainActor @Sendable (CGImage?, UInt64) -> Void)?
+    private var pendingOnImage: (@MainActor @Sendable (CGImage?, UInt64) async -> Void)?
     private var pendingTask: Task<Void, Never>?
     private var inFlightTask: Task<Void, Never>?
 
@@ -61,7 +62,7 @@ actor PreviewFrameLoader {
     func request(
         time: TimeInterval,
         token: UInt64,
-        onImage: @escaping @MainActor @Sendable (CGImage?, UInt64) -> Void
+        onImage: @escaping @MainActor @Sendable (CGImage?, UInt64) async -> Void
     ) {
         let canLeadingFire: Bool
         if let last = lastFiredAt {
@@ -96,13 +97,19 @@ actor PreviewFrameLoader {
     private func leadingFire(
         time: TimeInterval,
         token: UInt64,
-        onImage: @escaping @MainActor @Sendable (CGImage?, UInt64) -> Void
+        onImage: @escaping @MainActor @Sendable (CGImage?, UInt64) async -> Void
     ) {
         lastFiredAt = nowFn()
         inFlightTask = Task {
             defer { Task { await self.onInFlightDone() } }
             guard !Task.isCancelled else { return }
-            guard let cg = try? await self.decoder.image(at: time) else { return }
+            let cg: CGImage
+            do {
+                cg = try await self.decoder.image(at: time)
+            } catch {
+                print("[Preview] decode FAILED t=\(String(format: "%.2f", time)) error=\(error)")
+                return
+            }
             guard !Task.isCancelled else { return }
             await onImage(cg, token)
         }

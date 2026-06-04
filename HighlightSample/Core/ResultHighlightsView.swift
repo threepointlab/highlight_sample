@@ -26,7 +26,10 @@ struct ResultHighlightsView: View {
     @State private var interactions: [ClipRangeInteraction?]
     @State private var previewImages: [UIImage?]
     @State private var generationToken: UInt64 = 0
+    @State private var pickerController = ClipRangePickerController()
+    @State private var lastPreviewRequestAt: CFTimeInterval = 0
 
+    @MainActor
     init(highlights: [HighlightItem], videoURL: URL, videoDuration: Double) {
         self.highlights = highlights
         self.videoURL = videoURL
@@ -49,6 +52,8 @@ struct ResultHighlightsView: View {
             pageIndicator
 
             // 현재 페이지 ClipRangePicker
+            // NOTE: .id(currentPage) 제거 — 동일 videoURL에서 thumbnail strip 재사용.
+            // focus 는 pickerController 를 통해 명령형으로 전달.
             if highlights.indices.contains(currentPage) {
                 ClipRangePicker(
                     videoURL: videoURL,
@@ -63,10 +68,10 @@ struct ResultHighlightsView: View {
                     ),
                     onInteraction: { interaction in
                         handleInteraction(interaction)
-                    }
+                    },
+                    controller: pickerController
                 )
                 .padding(.horizontal, Spacing.l)
-                .id(currentPage) // 페이지 전환 시 재생성
             }
 
             // muted hint
@@ -80,6 +85,17 @@ struct ResultHighlightsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppColor.BG.primary)
+        .onAppear {
+            guard highlights.indices.contains(currentPage) else { return }
+            pickerController.focus(on: startTimes[currentPage], animated: false)
+        }
+        .onChange(of: currentPage) { _, new in
+            guard highlights.indices.contains(new) else { return }
+            pickerController.focus(on: startTimes[new], animated: true)
+        }
+        .onDisappear {
+            Task { await previewLoader.cancelPending() }
+        }
     }
 
     // MARK: - Carousel
@@ -118,6 +134,12 @@ struct ResultHighlightsView: View {
         }
         .onChange(of: currentPage) { oldPage, _ in
             guard highlights.indices.contains(oldPage) else { return }
+            // drag 활성 중 carousel jitter 로 onChange 가 fire 되면 generationToken 리셋으로
+            // 진행 중인 inflight callback 이 모두 token mismatch drop 됨 → drag 중 갱신 안 됨.
+            guard interactions[oldPage] == nil else {
+                print("[Preview] onChange SKIPPED (drag active on page \(oldPage))")
+                return
+            }
             interactions[oldPage] = nil
             previewImages[oldPage] = nil
             generationToken &+= 1
@@ -228,29 +250,46 @@ private extension ResultHighlightsView {
         case (nil, .some(let new)):
             player(for: highlights[page]).pause()
             generationToken &+= 1
+            lastPreviewRequestAt = CACurrentMediaTime()
             let token = generationToken
             let loader = previewLoader
             Task {
                 await loader.cancelPending()
                 await loader.request(time: timeOf(new), token: token) { [page] cgOpt, t in
-                    guard t == self.generationToken,
-                          self.currentPage == page,
-                          self.interactions[page] != nil,
-                          let cg = cgOpt else { return }
-                    self.previewImages[page] = UIImage(cgImage: cg)
+                    let tokenOK = t == self.generationToken
+                    let pageOK  = self.currentPage == page
+                    let intOK   = self.interactions[page] != nil
+                    guard tokenOK, pageOK, intOK, let cg = cgOpt else {
+                        print("[Preview] cb drop — tokenOK=\(tokenOK) pageOK=\(pageOK) intOK=\(intOK) cgOK=\(cgOpt != nil)")
+                        return
+                    }
+                    var imgs = self.previewImages
+                    imgs[page] = UIImage(cgImage: cg)
+                    self.previewImages = imgs
+                    print("[Preview] overlay SET page=\(page)")
                 }
             }
 
         case (.some, .some(let new)):
+            // 드래그 중 매 프레임 Task 생성 방지 — ~30fps 로 throttle.
+            let now = CACurrentMediaTime()
+            guard now - lastPreviewRequestAt >= 0.033 else { return }
+            lastPreviewRequestAt = now
             let token = generationToken
             let loader = previewLoader
             Task {
                 await loader.request(time: timeOf(new), token: token) { [page] cgOpt, t in
-                    guard t == self.generationToken,
-                          self.currentPage == page,
-                          self.interactions[page] != nil,
-                          let cg = cgOpt else { return }
-                    self.previewImages[page] = UIImage(cgImage: cg)
+                    let tokenOK = t == self.generationToken
+                    let pageOK  = self.currentPage == page
+                    let intOK   = self.interactions[page] != nil
+                    guard tokenOK, pageOK, intOK, let cg = cgOpt else {
+                        print("[Preview] cb drop — tokenOK=\(tokenOK) pageOK=\(pageOK) intOK=\(intOK) cgOK=\(cgOpt != nil)")
+                        return
+                    }
+                    var imgs = self.previewImages
+                    imgs[page] = UIImage(cgImage: cg)
+                    self.previewImages = imgs
+                    print("[Preview] overlay SET page=\(page)")
                 }
             }
 
@@ -264,6 +303,7 @@ private extension ResultHighlightsView {
             ) { [page] _ in
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(80))
+                    guard self.interactions[page] == nil else { return }
                     self.previewImages[page] = nil
                 }
             }

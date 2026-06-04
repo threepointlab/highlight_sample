@@ -102,10 +102,47 @@ enum ClipRangeMath {
         return max(0, min(offset, maxOffset))
     }
 
+    /// `time` 이 viewport 가운데 오도록 하는 scrollView contentOffset.x.
+    /// contentInset.left/right 를 포함한 유효 스크롤 범위 [−insetLeft, contentWidth−viewportWidth+insetRight] 로 클램핑.
+    @inlinable
+    static func centerOffset(
+        time: TimeInterval,
+        contentWidth: CGFloat,
+        viewportWidth: CGFloat,
+        videoDuration: TimeInterval,
+        contentInsetLeft: CGFloat,
+        contentInsetRight: CGFloat
+    ) -> CGFloat {
+        guard videoDuration > 0, contentWidth > 0 else { return -contentInsetLeft }
+        let widthPerSecond = contentWidth / CGFloat(videoDuration)
+        let rawX = CGFloat(time) * widthPerSecond - viewportWidth / 2
+        let minOffset = -contentInsetLeft
+        let maxOffset = contentWidth - viewportWidth + contentInsetRight
+        return max(minOffset, min(rawX, max(minOffset, maxOffset)))
+    }
+
     /// 영상 길이에 따른 maxZoom. `max(2, videoDuration / 60)` — 짧은 영상/degenerate 케이스도 최소 2배 보장.
     @inlinable
     static func maxZoom(videoDuration: TimeInterval) -> CGFloat {
         max(2, CGFloat(videoDuration) / 60)
+    }
+}
+
+// MARK: - ClipRangePickerController
+//
+// Imperative channel for centering the picker on a specific time without going through SwiftUI
+// diff. Avoids re-entrancy caused by gesture-driven binding writes triggering updateUIView.
+// Usage: call focus(on:) from onChange(of: currentPage) in the parent view.
+// NOTE: zoom and thumbnail strip are persistent across same-videoURL mounts.
+//       Do NOT attach .id(...) on ClipRangePicker to avoid thumbnail regeneration regression.
+
+@MainActor
+@Observable
+final class ClipRangePickerController {
+    fileprivate weak var coordinator: ClipRangeCoordinator?
+
+    func focus(on time: TimeInterval, animated: Bool = true) {
+        coordinator?.focusOnTime(time, animated: animated)
     }
 }
 
@@ -118,6 +155,7 @@ struct ClipRangePicker: View {
     @Binding var startTime: TimeInterval
     @Binding var endTime: TimeInterval
     var onInteraction: ((ClipRangeInteraction?) -> Void)? = nil
+    var controller: ClipRangePickerController? = nil
 
     /// Pinch 결과로 Coordinator 가 push 하는 zoom 값. videoURL 변경 시 Coordinator 가 1 로 reset.
     @State private var zoom: CGFloat = 1
@@ -131,7 +169,8 @@ struct ClipRangePicker: View {
                 startTime: $startTime,
                 endTime: $endTime,
                 zoom: $zoom,
-                onInteraction: onInteraction
+                onInteraction: onInteraction,
+                controller: controller
             )
         }
         .frame(height: ClipRangePickerConstants.totalHeight)
@@ -149,13 +188,16 @@ struct ClipRangeScrollView: UIViewRepresentable {
     @Binding var endTime: TimeInterval
     @Binding var zoom: CGFloat
     var onInteraction: ((ClipRangeInteraction?) -> Void)? = nil
+    var controller: ClipRangePickerController? = nil
 
     func makeCoordinator() -> ClipRangeCoordinator {
-        ClipRangeCoordinator(
+        let c = ClipRangeCoordinator(
             startBinding: $startTime,
             endBinding: $endTime,
             zoomBinding: $zoom
         )
+        controller?.coordinator = c
+        return c
     }
 
     func makeUIView(context: Context) -> UIScrollView {
@@ -244,6 +286,9 @@ struct ClipRangeScrollView: UIViewRepresentable {
     func updateUIView(_ uiView: UIScrollView, context: Context) {
         let coordinator = context.coordinator
         coordinator.onInteraction = onInteraction
+        if let ctrl = controller, ctrl.coordinator !== coordinator {
+            ctrl.coordinator = coordinator
+        }
         coordinator.configure(
             videoURL: videoURL,
             videoDuration: videoDuration,
@@ -291,6 +336,9 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
     private var dragOriginStart: TimeInterval = 0
     private var dragOriginEnd: TimeInterval = 0
     private var isTranslatingRange: Bool = false
+
+    // MARK: Focus — pendingFocusTime: viewportWidth=0 첫 configure 시 defer 용.
+    private var pendingFocusTime: TimeInterval?
 
     // MARK: Pinch state — .began 시점의 zoom + focal X (content/viewport) snapshot.
     private var pinchSnapshotZoom: CGFloat = 1
@@ -382,6 +430,15 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
                 contentWidth: contentWidth
             )
         }
+
+        if let pending = pendingFocusTime {
+            pendingFocusTime = nil
+            // layout commit 후 다음 tick 에 실행 — 동기 setContentOffset 이 contentSize 커밋 전에
+            // 호출되면 thumbnail 셀이 화면 밖으로 spill 하는 race 방지.
+            DispatchQueue.main.async { [weak self] in
+                self?.focusOnTime(pending, animated: false)
+            }
+        }
     }
 
     // MARK: thumbnails
@@ -447,6 +504,55 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
         return result
     }
 
+    // MARK: Focus
+
+    func focusOnTime(_ time: TimeInterval, animated: Bool) {
+        guard let scroll = scrollView, currentViewportWidth > 0, currentVideoDuration > 0 else {
+            pendingFocusTime = time
+            return
+        }
+        guard !isAnyGestureActive else { return }
+
+        let targetX = ClipRangeMath.centerOffset(
+            time: time,
+            contentWidth: currentContentWidth,
+            viewportWidth: currentViewportWidth,
+            videoDuration: currentVideoDuration,
+            contentInsetLeft: scroll.contentInset.left,
+            contentInsetRight: scroll.contentInset.right
+        )
+
+        let apply = { scroll.setContentOffset(CGPoint(x: targetX, y: 0), animated: false) }
+        if animated {
+            scroll.layer.removeAllAnimations()
+            UIView.animate(
+                withDuration: 0.45,
+                delay: 0,
+                usingSpringWithDamping: 0.85,
+                initialSpringVelocity: 0,
+                options: [.allowUserInteraction, .beginFromCurrentState],
+                animations: apply
+            )
+            views.animateLayoutViews(
+                startTime: startBinding.wrappedValue,
+                endTime: endBinding.wrappedValue,
+                contentWidth: currentContentWidth,
+                videoDuration: currentVideoDuration,
+                duration: 0.45, damping: 0.85, initialVelocity: 0
+            )
+        } else {
+            apply()
+        }
+    }
+
+    private var isAnyGestureActive: Bool {
+        if isTranslatingRange { return true }
+        let active: Set<UIGestureRecognizer.State> = [.began, .changed]
+        return active.contains(leftHandlePan?.state ?? .possible)
+            || active.contains(rightHandlePan?.state ?? .possible)
+            || active.contains(pinch?.state ?? .possible)
+    }
+
     // MARK: Gesture attachment (Step 2)
 
     /// makeUIView 종료 직전 1회 호출. 4개 recognizer 부착 + require(toFail) + delegate.
@@ -506,6 +612,7 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
 
         switch pan.state {
         case .began:
+            scroll.layer.removeAllAnimations()
             scroll.isScrollEnabled = false
             dragOriginStart = startBinding.wrappedValue
             views.setHandleActive(side: .left, active: true)
@@ -539,6 +646,7 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
 
         switch pan.state {
         case .began:
+            scroll.layer.removeAllAnimations()
             scroll.isScrollEnabled = false
             dragOriginEnd = endBinding.wrappedValue
             views.setHandleActive(side: .right, active: true)
@@ -565,6 +673,7 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
     @objc private func handleBodyLongPress(_ gr: UILongPressGestureRecognizer) {
         switch gr.state {
         case .began:
+            scrollView?.layer.removeAllAnimations()
             enterTranslateMode()
         case .ended, .cancelled, .failed:
             exitTranslateMode()
@@ -640,6 +749,7 @@ final class ClipRangeCoordinator: NSObject, UIScrollViewDelegate, UIGestureRecog
 
         switch pinchGR.state {
         case .began:
+            scroll.layer.removeAllAnimations()
             // .began 시점 zoom + focal point 캐시. viewport 좌표 = scroll.superview 기준 (contentOffset 영향 X).
             pinchSnapshotZoom = currentZoom
             let viewportReference = scroll.superview ?? scroll
