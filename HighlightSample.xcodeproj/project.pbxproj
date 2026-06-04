@@ -15,6 +15,7 @@
 		AA000075 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000015 /* DesignTokens.swift */; };
 		AA000076 /* TrialStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000016 /* TrialStub.swift */; };
 		AA000077 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000017 /* Assets.xcassets */; };
+		AA000078 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000018 /* Haptics.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		AA000015 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		AA000016 /* TrialStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrialStub.swift; sourceTree = "<group>"; };
 		AA000017 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA000018 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		AA000040 /* HighlightSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HighlightSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -75,6 +77,7 @@
 			children = (
 				AA000015 /* DesignTokens.swift */,
 				AA000016 /* TrialStub.swift */,
+				AA000018 /* Haptics.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -163,6 +166,7 @@
 				AA000074 /* ResultHighlightMock.swift in Sources */,
 				AA000075 /* DesignTokens.swift in Sources */,
 				AA000076 /* TrialStub.swift in Sources */,
+				AA000078 /* Haptics.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -22,6 +22,14 @@ enum AppColor {
         static let primary = Color.white
         static let muted   = Color(red: 0.67, green: 0.67, blue: 0.67) // #AAAAAA
     }
+    enum Accent {
+        static let brand = Color.yellow // Cliff actual: brand yellow-orange
+    }
+}
+
+// step4+ 에서 ResultHighlightsView 가 사용
+extension Spacing {
+    static let xl: CGFloat = 24
 }
 
 enum AppFont {
