@@ -1,0 +1,316 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AA000070 /* HighlightSampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000010 /* HighlightSampleApp.swift */; };
+		AA000071 /* DemoRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000011 /* DemoRootView.swift */; };
+		AA000072 /* ClipRangePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000012 /* ClipRangePicker.swift */; };
+		AA000073 /* ResultHighlightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000013 /* ResultHighlightsView.swift */; };
+		AA000074 /* ResultHighlightMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000014 /* ResultHighlightMock.swift */; };
+		AA000075 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000015 /* DesignTokens.swift */; };
+		AA000076 /* TrialStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000016 /* TrialStub.swift */; };
+		AA000077 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000017 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		AA000010 /* HighlightSampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HighlightSampleApp.swift; sourceTree = "<group>"; };
+		AA000011 /* DemoRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoRootView.swift; sourceTree = "<group>"; };
+		AA000012 /* ClipRangePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipRangePicker.swift; sourceTree = "<group>"; };
+		AA000013 /* ResultHighlightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultHighlightsView.swift; sourceTree = "<group>"; };
+		AA000014 /* ResultHighlightMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultHighlightMock.swift; sourceTree = "<group>"; };
+		AA000015 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		AA000016 /* TrialStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrialStub.swift; sourceTree = "<group>"; };
+		AA000017 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA000040 /* HighlightSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HighlightSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AA000031 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AA000020 /* HighlightSample */ = {
+			isa = PBXGroup;
+			children = (
+				AA000010 /* HighlightSampleApp.swift */,
+				AA000011 /* DemoRootView.swift */,
+				AA000022 /* Core */,
+				AA000023 /* Support */,
+				AA000017 /* Assets.xcassets */,
+			);
+			path = HighlightSample;
+			sourceTree = "<group>";
+		};
+		AA000021 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AA000040 /* HighlightSample.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AA000022 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				AA000012 /* ClipRangePicker.swift */,
+				AA000013 /* ResultHighlightsView.swift */,
+				AA000014 /* ResultHighlightMock.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		AA000023 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				AA000015 /* DesignTokens.swift */,
+				AA000016 /* TrialStub.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		AA000024 /* / */ = {
+			isa = PBXGroup;
+			children = (
+				AA000020 /* HighlightSample */,
+				AA000021 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AA000002 /* HighlightSample */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA000061 /* Build configuration list for PBXNativeTarget "HighlightSample" */;
+			buildPhases = (
+				AA000030 /* Sources */,
+				AA000031 /* Frameworks */,
+				AA000032 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HighlightSample;
+			productName = HighlightSample;
+			productReference = AA000040 /* HighlightSample.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AA000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					AA000002 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = AA000060 /* Build configuration list for PBXProject "HighlightSample" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AA000024;
+			productRefGroup = AA000021 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AA000002 /* HighlightSample */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA000032 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000077 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AA000030 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000070 /* HighlightSampleApp.swift in Sources */,
+				AA000071 /* DemoRootView.swift in Sources */,
+				AA000072 /* ClipRangePicker.swift in Sources */,
+				AA000073 /* ResultHighlightsView.swift in Sources */,
+				AA000074 /* ResultHighlightMock.swift in Sources */,
+				AA000075 /* DesignTokens.swift in Sources */,
+				AA000076 /* TrialStub.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AA000050 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AA000051 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AA000052 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.HighlightSample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		AA000053 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.HighlightSample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AA000060 /* Build configuration list for PBXProject "HighlightSample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000050 /* Debug */,
+				AA000051 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA000061 /* Build configuration list for PBXNativeTarget "HighlightSample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000052 /* Debug */,
+				AA000053 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AA000001 /* Project object */;
+}
